@@ -1,0 +1,9 @@
+$setup = $lib.import(zw.triage.setup)
+
+if ($cmdopts.self) {
+    $lib.print("Setting Triage API key for the current user.")
+} else {
+    $lib.print("Setting Triage API key for all users.")
+}
+
+$setup.setApiKey($cmdopts.apikey, $cmdopts.self)

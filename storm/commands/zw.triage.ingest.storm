@@ -2,8 +2,8 @@
 
 {
     // import libraries
-    $api = $lib.import(triage.api)
-    $privsep = $lib.import(triage.privsep)
+    $api = $lib.import(zw.triage.api)
+    $privsep = $lib.import(zw.triage.privsep)
 
     // get the sample id
     $sampleId = $api.getLatestIdForSample(:sha256)
@@ -11,21 +11,12 @@
         $lib.warn($lib.str.concat("Couldn't find any reports for ", :sha256))
         return()
     }
-
-    $lib.print($lib.str.concat("Ingesting sample ", $sampleId))
-
     // get the overview report
     $report = $api.getOverviewReportForId($sampleId)
     if ($report = $lib.null) {
         $lib.warn($lib.str.format("Failed to get overview report for {id}", id=$sampleId))
         return()
     }
-
-    $lib.print("Got overview report")
-    $lib.pprint($report.sample.sha256)
-
-    $ret = $privsep.testFunc("123")
-    $lib.print($lib.str.concat("test func returned ", $ret))
 
     // model it
     $privsep.modelOverviewReport($report)

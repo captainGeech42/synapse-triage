@@ -18,29 +18,20 @@ function testFunc(val) {
 // Returns: n/a
 function modelOverviewReport(report) {
     // get the file:bytes node
-    $lib.print("hello")
-    $lib.pprint($report)
-    $lib.print($report.sample.sha256)
-    $lib.print("asdf")
     file:bytes:sha256=$report.sample.sha256
 
-    $lib.print("Got file node")
-
     // parse the report timestamp
-    //$completed_ts = $lib.time.parse($report.sample.completed, "%Y-%m-%dT%H-%M%SZ")
+    $completed_ts = $lib.time.parse($report.sample.completed, "%Y-%m-%dT%H:%M:%SZ")
 
     // edge our source
-    $src = $getMetaSouce()
-    [ <(seen)+ { yield $src } ]
-    //[ <(seen)+ { yield $src } .seen=$completed_ts]
+    $src = $getMetaSource()
+    [ <(seen)+ { yield $src } .seen=$completed_ts]
     //[ <(seen)+ meta:source=$modconf.source .seen=$completed_ts]
-    
-    $lib.print("did source edge")
 
     // add family aka
     for $family in $report.analysis.family {
         [ +#rep.triage.$family ]
     }
-    
-    $lib.print("did fam tags")
+
+    fini { return() }
 }

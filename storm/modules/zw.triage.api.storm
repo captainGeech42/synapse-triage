@@ -1,4 +1,4 @@
-$setup = $lib.import(triage.setup)
+$setup = $lib.import(zw.triage.setup)
 
 // Submit a sample
 // Args:

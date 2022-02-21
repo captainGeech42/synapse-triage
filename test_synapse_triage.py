@@ -55,32 +55,31 @@ class SynapseTriageTest(s_test.SynTest):
             await s_genpkg.main((pkgproto, "--push", f"cell://{core.dirn}"))
 
             # set the api key
-            msgs = await core.stormlist("triage.setup.apikey --self $key", opts={"vars": {"key": api_key}})
+            msgs = await core.stormlist("zw.triage.setup.apikey --self $key", opts={"vars": {"key": api_key}})
             self.stormIsInPrint("for the current user", msgs)
             
-            msgs = await core.stormlist("triage.setup.apikey $key", opts={"vars": {"key": api_key}})
+            msgs = await core.stormlist("zw.triage.setup.apikey $key", opts={"vars": {"key": api_key}})
             self.stormIsInPrint("for all users", msgs)
 
             # try to submit the sample to triage
             # it already exists, should flag and not submit
-            msgs = await core.stormlist("file:bytes:sha256=$hash | triage.submit", opts={"vars": {"hash": mal_sha256}})
+            msgs = await core.stormlist("file:bytes:sha256=$hash | zw.triage.submit", opts={"vars": {"hash": mal_sha256}})
             self.stormIsInWarn("Report(s) already exist for ", msgs)
             self.stormNotInPrint("Hatching Triage (sample ID: ", msgs)
 
             # now force submit it
             # TODO: add --no-ingest in test and in lib to skip adding the cron job to auto ingest
-            msgs = await core.stormlist("file:bytes:sha256=$hash | triage.submit --force", opts={"vars": {"hash": mal_sha256}})
+            msgs = await core.stormlist("file:bytes:sha256=$hash | zw.triage.submit --force", opts={"vars": {"hash": mal_sha256}})
             self.stormIsInPrint("Hatching Triage (sample ID: ", msgs)
 
             # reports already exist for the test sample, so we don't need to wait to ingest it
             # TODO: add --config and --noconfig along with something in triage.setup to model configs
             # TODO: also customizable tag prefixes like other rapid power-ups
-            msgs = await core.stormlist("file:bytes:sha256=$hash | triage.ingest", opts={"vars": {"hash": mal_sha256}})
+            msgs = await core.stormlist("file:bytes:sha256=$hash | zw.triage.ingest", opts={"vars": {"hash": mal_sha256}})
             self.stormIsInPrint("Ingested latest execution report for ", msgs)
 
             # check the meta:source edge
-            nodes = await core.nodes("meta:source:name=\"hatching triage public cloud\"")
-            #nodes = await core.nodes("meta:source:name=$name -(seen)> *", opts={"vars": {"name": "hatching triage public cloud"}})
+            nodes = await core.nodes("meta:source:name=$name -(seen)> *", opts={"vars": {"name": "hatching triage public cloud"}})
             self.len(1, nodes)
 
             # check that its tagged properly
