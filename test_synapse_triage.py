@@ -46,6 +46,8 @@ class SynapseTriageTest(s_test.SynTest):
             # create file:bytes node in the cortex
             nodes = await core.nodes("[ file:bytes=$hash :name=$name ]", opts={"vars": {"hash": mal_sha256, "name": "raccon_test_boi"}})
             self.len(1, nodes)
+
+            # TODO: add support for hash forms and test for them
             
             # install package
             await s_genpkg.main((pkgproto, "--push", f"cell://{core.dirn}"))
@@ -57,8 +59,14 @@ class SynapseTriageTest(s_test.SynTest):
             msgs = await core.stormlist("triage.setup.apikey $key", opts={"vars": {"key": api_key}})
             self.stormIsInPrint("for all users", msgs)
 
-            # submit the sample to triage
+            # try to submit the sample to triage
+            # it already exists, should flag and not submit
             msgs = await core.stormlist("file:bytes:sha256=$hash | triage.submit", opts={"vars": {"hash": mal_sha256}})
+            self.stormIsInWarn("Report(s) already exist for ", msgs)
+            self.stormNotInPrint("Hatching Triage (sample ID: ", msgs)
+
+            # now force submit it
+            msgs = await core.stormlist("file:bytes:sha256=$hash | triage.submit --force", opts={"vars": {"hash": mal_sha256}})
             self.stormIsInPrint("Hatching Triage (sample ID: ", msgs)
 
 

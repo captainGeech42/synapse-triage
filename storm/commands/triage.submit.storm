@@ -4,7 +4,8 @@
     $api = $lib.import(triage.api)
     
     if (not $cmdopts.force and $api.doReportsExistForSample(:sha256)) {
-        $lib.warn($lib.str.format("Reports already exist for {hash}, use triage.ingest to model them, or triage.submit --force to resubmit them", hash=:sha256))
+        $lib.warn($lib.str.format("Report(s) already exist for {hash}, use triage.ingest to model them, or triage.submit --force to resubmit them", hash=:sha256))
+        $lib.exit()
     }
     
     $id = $api.submitToTriage(:sha256, false)
