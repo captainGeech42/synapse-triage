@@ -4,7 +4,6 @@ import os
 import logging
 import zipfile
 
-import synapse.axon as s_axon
 import synapse.common as s_common
 import synapse.tests.utils as s_test
 import synapse.tools.genpkg as s_genpkg
@@ -32,6 +31,7 @@ class SynapseTriageTest(s_test.SynTest):
 
         # get API key
         api_key = get_api_key()
+        self.assertIsNotNone(api_key)
 
         async with self.getTestCore() as core:
             # upload malware sample to test axon
