@@ -35,7 +35,15 @@ Samples will automatically have their report ingested once execution finishes. Y
 storm> file:bytes | limit 1 | zw.triage.ingest
 ```
 
-Both commands have a `--force` option to re-submit/re-model if it's already been done. For more details, please run `help zw.triage`.
+Both commands have a `--force` option to re-submit/re-model if it's already been done.
+
+You can also manually ingest a report from Triage using the sample ID:
+
+```
+storm> zw.triage.ingest.id 220221-wa3sgsbgbj
+```
+
+For more details, please run `help zw.triage`.
 
 ## Running the test suite
 

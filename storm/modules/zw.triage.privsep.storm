@@ -12,7 +12,14 @@ function getMetaSource() {
 // Returns: n/a
 function modelOverviewReport(report) {
     // get the file:bytes node
-    file:bytes:sha256=$report.sample.sha256
+    [file:bytes=$report.sample.sha256 :md5=$report.sample.md5 :sha1=$report.sample.sha1]
+
+    // get the file bytes if we don't have them
+    if (not $lib.bytes.has(:sha256)) {
+        // TODO: get sample bytes
+        $lib.warn("don't have bytes for this sample")
+    }
+
     $sampleFileBytes = $node
 
     // parse the report timestamp
@@ -56,14 +63,21 @@ function modelOverviewReport(report) {
                 // TODO: model more of these
                 // https://tria.ge/docs/cloud-api/overview-report/ Config struct
                 switch $key {
-                    "botnet": { [ +#desc.config.$fam.botnet.$val ] }
-                    "campaign": { [ +#desc.config.$fam.campaign.$val ] }
-                    "version": { [ +#desc.config.$fam.version.$val ] }
+                    "botnet": { $val = $val.replace(".", "_") [ +#desc.config.$fam.botnet.$val ] }
+                    "campaign": { $val = $val.replace(".", "_") [ +#desc.config.$fam.campaign.$val ] }
+                    "version": { $val = $val.replace(".", "_") [ +#desc.config.$fam.version.$val ] }
                     "keys": {
                         for $key in $val {
                             // TODO: tag the type of key
-                            { [ inet:passwd=$key.value +#rep.triage.$fam ] }
+                            { [( inet:passwd=$key.value +#rep.triage.$fam <(seen)+ { yield $src} )] }
                             [ +(refs)> { inet:passwd=$key.value } ]
+                        }
+                    }
+                    "c2": {
+                        // TODO add support for inet:server
+                        for $c2 in $val {
+                            { [( inet:url=$c2 +#rep.triage.$fam <(seen)+ { yield $src} )] }
+                            { [( inet:http:request=(:sha256, $c2, triage) :url=$c2 :exe=$sampleFileBytes +#rep.triage.$fam <(seen)+ { yield $src } )] }
                         }
                     }
                 }

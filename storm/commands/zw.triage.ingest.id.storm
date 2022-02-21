@@ -1,0 +1,23 @@
+// import libraries
+$triage = $lib.import(zw.triage)
+$api = $lib.import(zw.triage.api)
+$privsep = $lib.import(zw.triage.privsep)
+
+// get the overview report
+$report = $api.getOverviewReportForId($cmdopts.sampleId)
+if ($report = $lib.null) {
+    $lib.exit($lib.str.format("Failed to get overview report for {id}", id=$cmdopts.sampleId))
+}
+
+// check if it is already modeled
+if (not $cmdopts.force and $triage.isSampleModeled($report.sample.sha256)) {
+    $lib.warn($lib.str.format("The file:bytes for {id} already has a report ingested, use --force to re-ingest", id=$cmdopts.sampleId))
+    return()
+}
+
+// model it
+$privsep.modelOverviewReport($report)
+
+$lib.print($lib.str.format("Ingested {id} from Hatching Triage", id=$cmdopts.sampleId))
+
+fini { file:bytes:sha256=$report.sample.sha256 }

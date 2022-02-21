@@ -26,6 +26,9 @@ def get_api_key():
 
 class SynapseTriageTest(s_test.SynTest):
 
+    def has_tag(self, node, tag):
+        self.true(node.tags.get(tag) is not None)
+
     # Upload the sample used for testing
     async def _t_upload_sample(self, core: s_cortex.Cortex) -> str:
         # upload malware sample to test axon
@@ -87,7 +90,6 @@ class SynapseTriageTest(s_test.SynTest):
         self.len(1, nodes)
 
         # check that its tagged properly
-        has_tag = lambda n, t: n.tags.get(t) is not None
 
         nodes = await core.nodes("file:bytes:sha256=$hash", opts={"vars": {"hash": mal_sha256}})
         self.len(1, nodes)
@@ -95,14 +97,14 @@ class SynapseTriageTest(s_test.SynTest):
         self.eq(n.ndef, ("file:bytes", "sha256:af0bc0b2149df1769de0128984f8178620fae9de69e5bb4e0a3d661ae8cd18eb"))
 
         # aka?
-        has_tag(n, "rep.triage.raccoon")
+        self.has_tag(n, "rep.triage.raccoon")
 
         # tags?
-        has_tag(n, "rep.triage.stealer")
-        has_tag(n, "rep.triage.suricata")
+        self.has_tag(n, "rep.triage.stealer")
+        self.has_tag(n, "rep.triage.suricata")
 
         # config?
-        has_tag(n, "desc.config.raccoon.botnet.e50c949ecf0380ef03a3368f13619264294662b6")
+        self.has_tag(n, "desc.config.raccoon.botnet.e50c949ecf0380ef03a3368f13619264294662b6")
 
         # check the passwd edges
         nodes = await core.nodes("file:bytes:sha256=$hash -(refs)> inet:passwd +#rep.triage.raccoon", opts={"vars": {"hash": mal_sha256}})
@@ -121,6 +123,35 @@ class SynapseTriageTest(s_test.SynTest):
         msgs = await core.stormlist("file:bytes:sha256=$hash | zw.triage.ingest --force", opts={"vars": {"hash": mal_sha256}})
         self.stormIsInPrint("Ingested latest execution report for ", msgs)
 
+    async def _t_ingest_id_1(self, core: s_cortex.Cortex):
+        # Vidar sample
+        # https://tria.ge/220221-wa3sgsbgbj
+        sample_id = "220221-wa3sgsbgbj"
+        hash = "31fabfbe61fdc161c12c62ec848d558cce743de39b58cf634910bd6fb305f22d"
+    
+        msgs = await core.stormlist("zw.triage.ingest.id $id", opts={"vars": {"id": sample_id}})
+        self.stormIsInPrint(f"Ingested {sample_id} from Hatching Triage", msgs)
+
+        nodes = await core.nodes("file:bytes:sha256=$hash", opts={"vars": {"hash": hash}})
+        self.len(1, nodes)
+        n = nodes[0]
+        self.eq(n.ndef, ("file:bytes", "sha256:31fabfbe61fdc161c12c62ec848d558cce743de39b58cf634910bd6fb305f22d"))
+
+        # aka?
+        self.has_tag(n, "rep.triage.vidar")
+
+        # config?
+        self.has_tag(n, "desc.config.vidar.version.50_3")
+        self.has_tag(n, "desc.config.vidar.botnet.565")
+
+        # c2s?
+        # check the digraph edge
+        nodes = await core.nodes("file:bytes=$hash -> inet:http:request:exe +#rep.triage.vidar", opts={"vars": {"hash": hash}})
+        self.len(2, nodes)
+        # check the url node
+        nodes = await core.nodes("file:bytes=$hash -> inet:http:request:exe +#rep.triage.vidar :url -> inet:url +#rep.triage.vidar", opts={"vars": {"hash": hash}})
+        self.len(2, nodes)
+
     async def test_synapse_triage(self):
         # this test suite requires internet access
         self.skipIfNoInternet()
@@ -130,6 +161,8 @@ class SynapseTriageTest(s_test.SynTest):
 
             mal_sha256 = await self._t_upload_sample(core)
 
-            await self._t_submit(core, mal_sha256) 
+            # await self._t_submit(core, mal_sha256) 
 
-            await self._t_ingest(core, mal_sha256)
+            # await self._t_ingest(core, mal_sha256)
+
+            await self._t_ingest_id_1(core)

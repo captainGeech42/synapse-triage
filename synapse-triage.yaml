@@ -76,3 +76,20 @@ commands:
           default: false
           action: store_true
           help: Re-ingest the report even if it's already been modeled
+    
+  - name: zw.triage.ingest.id
+    descr: Ingest execution report by sample ID on Hatching Triage
+    perms:
+      - [power-ups, zw, triage, user]
+    forms:
+      output:
+        - file:bytes
+    cmdargs:
+      - - sampleId
+        - type: str
+          help: Sample ID to ingest (e.g., 220221-wxflgabgdq)
+      - - --force
+        - type: bool
+          default: false
+          action: store_true
+          help: Ingest the report even if the underlying file:bytes node already has a modeled report
