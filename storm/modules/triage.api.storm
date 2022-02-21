@@ -60,3 +60,7 @@ function doReportsExistForSample(sha256) {
     
     return(false)
 }
+
+// Check the status of a sample
+// Args:
+//  -
