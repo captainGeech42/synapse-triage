@@ -17,13 +17,11 @@ perms:
 
 modules:
   - name: triage
+  - name: triage.api
   - name: triage.setup
   - name: triage.privsep
     modconf:
       source: 53786cb9f6095eef916eb9684bc3c800
-    asroot:perms:
-      - [power-ups, triage, user]
-  - name: triage.api
     asroot:perms:
       - [power-ups, triage, user]
 

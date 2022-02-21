@@ -8,7 +8,7 @@ $setup = $lib.import(triage.setup)
 //  - If sample runs successfully, the sample ID will be returned
 //  - If not, an empty string will be returned
 function submitToTriage(sha256, internet) {
-    $headers = ({"Authorization": $lib.str.concat("Bearer ", $setup.getApiKey()) })
+    $headers = ({"Authorization": $lib.str.concat("Bearer ", $setup.getApiKey())})
 
     // TODO: add actual support for $internet
     $json_data = $lib.json.save(({
@@ -41,7 +41,7 @@ function submitToTriage(sha256, internet) {
 // Returns: bool
 //  - true if 1+ reports exist, otherwise false
 function doReportsExistForSample(sha256) {
-    $headers = ({"Authorization": $lib.str.concat("Bearer ", $setup.getApiKey()) })
+    $headers = ({"Authorization": $lib.str.concat("Bearer ", $setup.getApiKey())})
 
     $params = ({"query": $lib.str.concat("sha256:", $sha256)})
     
@@ -63,4 +63,61 @@ function doReportsExistForSample(sha256) {
 
 // Check the status of a sample
 // Args:
-//  -
+//  - id (str): Sample ID to check
+// Returns: str
+//  - status of the sample, or empty string if error
+//    * see the bottom of https://tria.ge/docs/cloud-api/samples/ for the possible values
+function getSampleStatusById(id) {
+    $headers = ({"Authorization": $lib.str.concat("Bearer ", $setup.getApiKey())})
+
+    $resp = $lib.inet.http.get($lib.str.concat("https://api.tria.ge/v0/samples/", $id), headers=$headers)
+    if ($resp.code != 200) {
+        $lib.warn($lib.str.format("Failed to check sample status for {id}", id=$id))
+        return("")
+    }
+
+    return($resp.json().status)
+}
+
+// Get the latest sample ID for a given SHA256
+// Args:
+//  - sha256 (str): The SHA256 to get a sample ID for
+// Returns: str
+//  - the sample ID, or empty string if error
+function getLatestIdForSample(sha256) {
+    $headers = ({"Authorization": $lib.str.concat("Bearer ", $setup.getApiKey())})
+
+    $params = ({"query": $lib.str.concat("sha256:", $sha256)})
+    
+    $resp = $lib.inet.http.get("https://api.tria.ge/v0/search", headers=$headers, params=$params)
+    
+    if ($resp.code != 200) {
+        $lib.warn($lib.str.format("Failed to check if reports exist for {hash} on Hatching Triage", hash=$sha256))
+        return("")
+    }
+    
+    $resp_data = $resp.json()
+
+    if ($resp_data.data.size() > 0) {
+        return($resp_data.data.index(0).id)
+    }
+}
+
+// Get the overview report for a sample ID
+// Args:
+//  - id (str): Sample ID to lookup
+// Returns: dict
+//  - https://tria.ge/docs/cloud-api/overview-report/
+//  - https://tria.ge/docs/cloud-api/samples/#get-samplessampleidoverviewjson
+function getOverviewReportForId(id) {
+    $headers = ({"Authorization": $lib.str.concat("Bearer ", $setup.getApiKey())})
+
+    $resp = $lib.inet.http.get($lib.str.format("https://api.tria.ge/v0/samples/{id}/overview.json", id=$id), headers=$headers)
+    
+    if ($resp.code != 200) {
+        $lib.warn($lib.str.format("Failed to get overview report for {id}", id=$id))
+        return($lib.null)
+    }
+    
+    return($resp.json())
+}

@@ -26,6 +26,8 @@ def get_api_key():
 class SynapseTriageTest(s_test.SynTest):
 
     async def test_synapse_triage(self):
+        has_tag = lambda n, t: n.tags.get(t) is not None
+
         # this test suite requires internet access
         self.skipIfNoInternet()
 
@@ -44,7 +46,7 @@ class SynapseTriageTest(s_test.SynTest):
                 self.eq(binascii.hexlify(axon_sha256).decode(), mal_sha256)
 
             # create file:bytes node in the cortex
-            nodes = await core.nodes("[ file:bytes=$hash :name=$name ]", opts={"vars": {"hash": mal_sha256, "name": "raccon_test_boi"}})
+            nodes = await core.nodes("[ file:bytes=$hash :name=$name ]", opts={"vars": {"hash": mal_sha256, "name": "raccoon_test_boi"}})
             self.len(1, nodes)
 
             # TODO: add support for hash forms and test for them
@@ -66,8 +68,34 @@ class SynapseTriageTest(s_test.SynTest):
             self.stormNotInPrint("Hatching Triage (sample ID: ", msgs)
 
             # now force submit it
+            # TODO: add --no-ingest in test and in lib to skip adding the cron job to auto ingest
             msgs = await core.stormlist("file:bytes:sha256=$hash | triage.submit --force", opts={"vars": {"hash": mal_sha256}})
             self.stormIsInPrint("Hatching Triage (sample ID: ", msgs)
+
+            # reports already exist for the test sample, so we don't need to wait to ingest it
+            # TODO: add --config and --noconfig along with something in triage.setup to model configs
+            # TODO: also customizable tag prefixes like other rapid power-ups
+            msgs = await core.stormlist("file:bytes:sha256=$hash | triage.ingest", opts={"vars": {"hash": mal_sha256}})
+            self.stormIsInPrint("Ingested latest execution report for ", msgs)
+            print(msgs)
+
+            # check the meta:source edge
+            nodes = await core.nodes("meta:source:name=\"hatching triage public cloud\" -> *")
+            #nodes = await core.nodes("meta:source:name=$name -(seen)> *", opts={"vars": {"name": "hatching triage public cloud"}})
+            self.len(1, nodes)
+
+            # check that its tagged properly
+            nodes = await core.nodes("file:bytes:sha256=$hash", opts={"vars": {"hash": mal_sha256}})
+            self.len(1, nodes)
+            n = nodes[0]
+            self.eq(n.ndef, ("file:bytes", "sha256:af0bc0b2149df1769de0128984f8178620fae9de69e5bb4e0a3d661ae8cd18eb"))
+
+            # aka?
+            has_tag(n, "rep.triage.raccoon")
+
+
+
+
 
 
 

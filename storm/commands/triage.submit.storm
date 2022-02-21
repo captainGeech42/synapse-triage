@@ -5,7 +5,7 @@
     
     if (not $cmdopts.force and $api.doReportsExistForSample(:sha256)) {
         $lib.warn($lib.str.format("Report(s) already exist for {hash}, use triage.ingest to model them, or triage.submit --force to resubmit them", hash=:sha256))
-        $lib.exit()
+        return()
     }
     
     $id = $api.submitToTriage(:sha256, false)

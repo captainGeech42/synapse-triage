@@ -1,0 +1,24 @@
++file:bytes
+
+{
+    // import libraries
+    $api = $lib.import(triage.api)
+    $privsep = $lib.import(triage.privsep)
+
+    // get the sample id
+    $sampleId = $api.getLatestIdForSample(:sha256)
+    if ($sampleId = "") {
+        return()
+    }
+
+    // get the overview report
+    $report = $api.getOverviewReportForId($sampleId)
+    if ($report = $lib.null) {
+        return()
+    }
+
+    // model it
+    $privsep.modelOverviewReport($report)
+
+    $lib.print($lib.str.concat("Ingested latest execution report for ", :sha256))
+}

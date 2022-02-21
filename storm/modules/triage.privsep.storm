@@ -1,0 +1,29 @@
+// Get the proper meta:source node for Hatching Triage
+// Args: n/a
+// Returns: meta:source node
+function getMetaSource() {
+    [ meta:source=$modconf.source :name="hatching triage public cloud"]
+    return($node)
+}
+
+// Model an overview report from Hatching Triage
+// Args:
+//  - report (dict): overview report data
+// Returns: n/a
+function modelOverviewReport(report) {
+    // get the file:bytes node
+    file:bytes:sha256=$report.sample.sha256
+
+    // parse the report timestamp
+    $completed_ts = $lib.time.parse($report.sample.completed, "%Y-%m-%dT%H-%M%SZ")
+
+    // edge our source
+    [ <(seen)+ { yield $getMetaSource() } ]
+    //[ <(seen)+ { yield $src } .seen=$completed_ts]
+    //[ <(seen)+ meta:source=$modconf.source .seen=$completed_ts]
+
+    // add family aka
+    for $family in $report.analysis.family {
+        [ +#rep.triage.$family ]
+    }
+}
