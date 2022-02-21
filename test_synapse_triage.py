@@ -31,7 +31,7 @@ class SynapseTriageTest(s_test.SynTest):
 
         # get API key
         api_key = get_api_key()
-        self.assertIsNotNone(api_key)
+        self.assertIsNotNone(api_key, "You must provide an API key in $SYNAPSE_TRIAGE_APIKEY to run the test suite")
 
         async with self.getTestCore() as core:
             # upload malware sample to test axon
