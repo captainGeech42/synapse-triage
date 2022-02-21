@@ -6,12 +6,6 @@ function getMetaSource() {
     return($node)
 }
 
-function testFunc(val) {
-    $lib.print("in the test func")
-    $lib.print($val)
-    return("zxcvzxcv")
-}
-
 // Model an overview report from Hatching Triage
 // Args:
 //  - report (dict): overview report data

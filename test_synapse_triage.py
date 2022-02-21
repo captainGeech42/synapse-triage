@@ -91,31 +91,11 @@ class SynapseTriageTest(s_test.SynTest):
             # aka?
             has_tag(n, "rep.triage.raccoon")
 
+            # try to re-ingest it, should fail without --force
+            msgs = await core.stormlist("file:bytes:sha256=$hash | zw.triage.ingest", opts={"vars": {"hash": mal_sha256}})
+            self.stormNotInPrint("Ingested latest execution report for ", msgs)
+            self.stormIsInWarn(" is already modeled, use --force ", msgs)
 
-
-
-
-
-
-
-
-
-
-            return
-
-            # some test APIs to simplify async generators and such...
-            msgs = await core.stormlist("acme.hello.print --show-prefix --prefix VISI \"hello world!\"")
-            self.stormIsInPrint("VISI hello world!", msgs)
-
-            nodes = await core.nodes("[ inet:email=visi@vertex.link ] | acme.hello.autotag")
-            self.len(1, nodes)
-            self.true(nodes[0].tags.get("acme.hello") is not None)
-
-            # check that the meta source node got created and linked...
-            nodes = await core.nodes("meta:source:name=\"ACME Hello World\" -(seen)> *")
-            self.len(1, nodes)
-            self.eq(nodes[0].ndef, ("inet:email", "visi@vertex.link"))
-
-            # check that the description is in the auto generated `--help` output
-            msgs = await core.stormlist("acme.hello.print --help")
-            self.stormIsInPrint("Print some text", msgs)
+            # now ingest it with --force
+            msgs = await core.stormlist("file:bytes:sha256=$hash | zw.triage.ingest --force", opts={"vars": {"hash": mal_sha256}})
+            self.stormIsInPrint("Ingested latest execution report for ", msgs)

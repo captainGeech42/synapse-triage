@@ -70,3 +70,9 @@ commands:
         - file:bytes
       output:
         - file:bytes
+    cmdargs:
+      - - --force
+        - type: bool
+          default: false
+          action: store_true
+          help: Re-ingest the report even if it's already been modeled

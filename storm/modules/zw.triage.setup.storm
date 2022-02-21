@@ -18,7 +18,7 @@ function getApiKey() {
     }
 
     // no key in either, bail
-    $lib.exit("Hatching Triage API key is not set. Use zw-triage.setup.apikey to set one.")
+    $lib.exit("Hatching Triage API key is not set. Use zw.triage.setup.apikey to set one.")
 }
 
 // Set the Tria.ge API key

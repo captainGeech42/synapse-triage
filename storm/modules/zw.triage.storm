@@ -1,0 +1,10 @@
+$privsep = $lib.import(zw.triage.privsep)
+
+// Check if a sample has already been modeled
+function isSampleModeled(sha256) {
+    file:bytes:sha256=$sha256
+    $src = $privsep.getMetaSource()
+    <(seen)- meta:source=$src
+    if $node { return($lib.true) }
+    return($lib.false)
+}

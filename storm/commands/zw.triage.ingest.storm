@@ -2,13 +2,22 @@
 
 {
     // import libraries
+    $triage = $lib.import(zw.triage)
     $api = $lib.import(zw.triage.api)
     $privsep = $lib.import(zw.triage.privsep)
 
+    $fileSha256 = :sha256
+
+    // check if it is already modeled
+    if (not $cmdopts.force and $triage.isSampleModeled($fileSha256)) {
+        $lib.warn($lib.str.format("{hash} is already modeled, use --force to re-model", hash=$fileSha256))
+        return()
+    }
+
     // get the sample id
-    $sampleId = $api.getLatestIdForSample(:sha256)
+    $sampleId = $api.getLatestIdForSample($fileSha256)
     if ($sampleId = "") {
-        $lib.warn($lib.str.concat("Couldn't find any reports for ", :sha256))
+        $lib.warn($lib.str.concat("Couldn't find any reports for ", $fileSha256))
         return()
     }
     // get the overview report
@@ -21,5 +30,5 @@
     // model it
     $privsep.modelOverviewReport($report)
 
-    $lib.print($lib.str.concat("Ingested latest execution report for ", :sha256))
+    $lib.print($lib.str.concat("Ingested latest execution report for ", $fileSha256))
 }
