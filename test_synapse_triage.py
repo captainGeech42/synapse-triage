@@ -86,7 +86,7 @@ class SynapseTriageTest(s_test.SynTest):
         self.stormIsInPrint("Ingested latest execution report for ", msgs)
 
         # check the meta:source edge
-        nodes = await core.nodes("meta:source:name=$name -(seen)> *", opts={"vars": {"name": "hatching triage public cloud"}})
+        nodes = await core.nodes("meta:source:name=$name -(seen)> file:bytes:sha256=$hash", opts={"vars": {"name": "hatching triage public cloud", "hash": mal_sha256}})
         self.len(1, nodes)
 
         # check that its tagged properly
@@ -161,8 +161,8 @@ class SynapseTriageTest(s_test.SynTest):
 
             mal_sha256 = await self._t_upload_sample(core)
 
-            # await self._t_submit(core, mal_sha256) 
+            await self._t_submit(core, mal_sha256) 
 
-            # await self._t_ingest(core, mal_sha256)
+            await self._t_ingest(core, mal_sha256)
 
             await self._t_ingest_id_1(core)
