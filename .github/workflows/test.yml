@@ -6,6 +6,8 @@ on:
     # https://github.community/t/dont-run-on-tag-creation/137469/2
     tags-ignore:
       - "**"
+    branches:
+      - "**"
   pull_request:
   workflow_dispatch:
 
