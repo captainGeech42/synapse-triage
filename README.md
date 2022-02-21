@@ -3,7 +3,17 @@ Synapse Rapid Power-Up for Hatching Triage
 
 ## Install
 
-TBD
+To install the latest release, run the following Storm command
+
+```
+storm> pkg.load --raw https://github.com/captainGeech42/synapse-triage/releases/latest/download/synapse_triage.json
+```
+
+You can also clone this repo, and install via the telepath API:
+
+```
+$ python -m synapse.tools.genpkg --push core00 synapse-triage.yaml
+```
 
 ## Test
 
