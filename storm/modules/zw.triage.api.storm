@@ -13,7 +13,7 @@ function submitToTriage(sha256, internet) {
     // TODO: add actual support for $internet
     $json_data = $lib.json.save(({
         "kind": "file",
-        "interactive": false
+        "interactive": $lib.false
     }))
 
     $form = ([
