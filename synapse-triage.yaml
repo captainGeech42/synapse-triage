@@ -1,0 +1,74 @@
+name: synapse-triage
+version: 1.0.0
+synapse_minversion: [2, 58, 0]
+desc: The Synapse Triage package provides commands to run samples and ingest execution reports from the Hatching Triage public cloud sandbox.
+
+author:
+  url: https://zanderwork.com/
+  name: Zander Work
+
+genopts:
+  dotstorm: true
+
+perms:
+  - perm: [power-ups, triage, user]
+    desc: Allows a user to run triage commands and import triage provided modules
+    gate: cortex
+
+modules:
+  - name: triage
+  - name: triage.setup
+  - name: triage.privsep
+    modconf:
+      source: 53786cb9f6095eef916eb9684bc3c800
+    asroot:perms:
+      - [power-ups, triage, user]
+  - name: triage.api
+    asroot:perms:
+      - [power-ups, triage, user]
+
+commands:
+  - name: triage.setup.apikey
+    descr: Set the Hatching Triage API key
+    perms:
+      - [power-ups, triage, user]
+    cmdargs:
+      - - apikey
+        - type: str
+          help: The Hatching Triage API key
+      - - --self
+        - type: bool
+          default: false
+          action: store_true
+          help: Set the key as a user variable. If not used, the key is set globally.
+
+  - name: triage.submit
+    descr: Submit a sample to Hatching Triage
+    perms:
+      - [power-ups, triage, user]
+    forms:
+      input:
+        - file:bytes
+      output:
+        - file:bytes
+    cmdargs:
+      - - --internet
+        - type: bool
+          default: false
+          action: store_true
+          help: Run the sample with a connection to the Internet
+      - - --force
+        - type: bool
+          default: false
+          action: store_true
+          help: Resubmit the sample even if a report has already been ingested for it
+
+  - name: triage.ingest
+    descr: Ingest execution reports for a sample on Hatching Triage
+    perms:
+        - [ power-ups, triage, user ]
+    forms:
+      input:
+        - file:bytes
+      output:
+        - file:bytes

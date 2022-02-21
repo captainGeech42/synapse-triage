@@ -1,0 +1,62 @@
+$setup = $lib.import(triage.setup)
+
+// Submit a sample
+// Args:
+//  - sha256 (str): The SHA256 of the sample to submit. Bytes must be in the Axon
+//  - internet (bool): If true, sample will run with a connection to the outside Internet
+// Returns: str
+//  - If sample runs successfully, the sample ID will be returned
+//  - If not, an empty string will be returned
+function submitToTriage(sha256, internet) {
+    $headers = ({"Authorization": $lib.str.concat("Bearer ", $setup.getApiKey()) })
+
+    // TODO: add actual support for $internet
+    $json_data = $lib.json.save(({
+        "kind": "file",
+        "interactive": false
+    }))
+
+    $form = ([
+        {"name": "file", "sha256": $sha256, "filename": $lib.str.concat("synapse_", $sha256)},
+        {"name": "_json", "value": $json_data}
+    ])
+    
+    $resp = $lib.inet.http.post("https://api.tria.ge/v0/samples", headers=$headers, fields=$form)
+    
+    //if ($resp.code != 200 or $resp.ok != true) {
+    if ($resp.code != 200) {
+        $lib.warn($lib.str.format("Failed to submit {hash} to Hatching Triage", hash=$sha256))
+        return("")
+    }
+    
+    $resp_data = $resp.json()
+    $id = $resp_data.id
+     
+    return($id)
+}
+
+// Check if a report exists for a sample
+// Args:
+//  - sha256 (str): The SHA256 of the sample to submit. Bytes must be in the Axon
+// Returns: bool
+//  - true if 1+ reports exist, otherwise false
+function doReportsExistForSample(sha256) {
+    $headers = ({"Authorization": $lib.str.concat("Bearer ", $setup.getApiKey()) })
+
+    $params = ({"query": $lib.str.concat("sha256:", $sha256)})
+    
+    $resp = $lib.inet.http.get("https://api.tria.ge/v0/search", headers=$headers, params=$params)
+    
+    if ($resp.code != 200) {
+        $lib.warn($lib.str.format("Failed to check if reports exist for {hash} on Hatching Triage", hash=$sha256))
+        return(false)
+    }
+    
+    $resp_data = $resp.json()
+    
+    if ($resp_data.data.size() > 0) {
+        return(true)
+    }
+    
+    return(false)
+}

@@ -1,0 +1,14 @@
++file:bytes
+
+{
+    $api = $lib.import(triage.api)
+    
+    if (not $cmdopts.force and $api.doReportsExistForSample(:sha256)) {
+        $lib.warn($lib.str.format("Reports already exist for {hash}, use triage.ingest to model them, or triage.submit --force to resubmit them", hash=:sha256))
+    }
+    
+    $id = $api.submitToTriage(:sha256, false)
+    if ($id != "") {
+        $lib.print($lib.str.format("Submitted {hash} to Hatching Triage (sample ID: {id})", hash=:sha256, id=$id))
+    }
+}

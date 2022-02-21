@@ -1,0 +1,4 @@
+function initMetaSource() {
+    [ meta:source=$modconf.source :name="Hatching Triage Public Cloud"]
+    return($node)
+}

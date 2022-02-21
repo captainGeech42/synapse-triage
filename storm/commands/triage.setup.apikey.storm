@@ -1,0 +1,9 @@
+$setup = $lib.import(triage.setup)
+
+if ($cmdopts.self) {
+    $lib.print("Setting Synapse-Triage API key for the current user.")
+} else {
+    $lib.print("Setting Synapse-Triage API key for all users.")
+}
+
+$setup.setApiKey($cmdopts.apikey, $cmdopts.self)
