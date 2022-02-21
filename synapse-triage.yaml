@@ -1,5 +1,5 @@
 name: synapse-triage
-version: 1.0.0
+version: 0.1.0
 synapse_minversion: [2, 58, 0]
 desc: The Synapse Triage package provides commands to run samples and ingest execution reports from the Hatching Triage public cloud sandbox.
 
