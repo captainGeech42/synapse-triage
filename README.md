@@ -47,3 +47,7 @@ You must have a Tria.ge public cloud API key to run the tests. Please put the ke
 $ pip install -r requirements.txt
 $ SYNAPSE_TRIAGE_APIKEY=asdf python -m pytest test_synapse_triage.py
 ```
+
+## TODO
+
+URL submissions: https://tria.ge/220221-qyb2saadb6

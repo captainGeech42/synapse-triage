@@ -13,6 +13,7 @@ function getMetaSource() {
 function modelOverviewReport(report) {
     // get the file:bytes node
     file:bytes:sha256=$report.sample.sha256
+    $sampleFileBytes = $node
 
     // parse the report timestamp
     $completed_ts = $lib.time.parse($report.sample.completed, "%Y-%m-%dT%H:%M:%SZ")
@@ -20,11 +21,54 @@ function modelOverviewReport(report) {
     // edge our source
     $src = $getMetaSource()
     [ <(seen)+ { yield $src } .seen=$completed_ts]
-    //[ <(seen)+ meta:source=$modconf.source .seen=$completed_ts]
 
     // add family aka
     for $family in $report.analysis.family {
         [ +#rep.triage.$family ]
+    }
+
+    // add tags
+    // some of these are config values, don't do them
+    // botnet:zxcv
+    // campaign:zxcv
+    for $tag in $report.analysis.tags {
+        // if there is a : in the tag, it is a config value (or family, which is already handled)
+        // skip it
+        // there is also "suricata", which means the dynamic execution network traffic hit on a
+        // suricata rule. TODO decide if that should get modeled (currently it is)
+        if ($tag.find(":") = $lib.null) { [ +#rep.triage.$tag] }
+    }
+
+    // model config
+    for $extracted in $report.extracted {
+        // config section is optional
+        if ($extracted.config) {
+            // make sure there is a family name available
+            // if not, can't properly model the config
+            $fam = $extracted.config.family
+            if ($fam = $lib.null) {
+                continue
+            }
+
+            // loop through each config item
+            // this is a tuple, key @ 0, value @ 1
+            for ($key, $val) in $extracted.config {
+                // TODO: model more of these
+                // https://tria.ge/docs/cloud-api/overview-report/ Config struct
+                switch $key {
+                    "botnet": { [ +#desc.config.$fam.botnet.$val ] }
+                    "campaign": { [ +#desc.config.$fam.campaign.$val ] }
+                    "version": { [ +#desc.config.$fam.version.$val ] }
+                    "keys": {
+                        for $key in $val {
+                            // TODO: tag the type of key
+                            { [ inet:passwd=$key.value +#rep.triage.$fam ] }
+                            [ +(refs)> { inet:passwd=$key.value } ]
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fini { return() }

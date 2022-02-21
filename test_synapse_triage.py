@@ -72,7 +72,6 @@ class SynapseTriageTest(s_test.SynTest):
         # now force submit it
         # TODO: add --no-ingest in test and in lib to skip adding the cron job to auto ingest
         msgs = await core.stormlist("file:bytes:sha256=$hash | zw.triage.submit --force", opts={"vars": {"hash": mal_sha256}})
-        print(msgs)
         self.stormIsInPrint("Hatching Triage (sample ID: ", msgs)
     
     # Tests for report ingestion
@@ -97,6 +96,21 @@ class SynapseTriageTest(s_test.SynTest):
 
         # aka?
         has_tag(n, "rep.triage.raccoon")
+
+        # tags?
+        has_tag(n, "rep.triage.stealer")
+        has_tag(n, "rep.triage.suricata")
+
+        # config?
+        has_tag(n, "desc.config.raccoon.botnet.e50c949ecf0380ef03a3368f13619264294662b6")
+
+        # check the passwd edges
+        nodes = await core.nodes("file:bytes:sha256=$hash -(refs)> inet:passwd +#rep.triage.raccoon", opts={"vars": {"hash": mal_sha256}})
+        self.len(2, nodes)
+
+        # check the inet:http:requests
+        #nodes = await core.nodes("file:bytes:sha256=$hash -> inet:dns:request +#rep.triage.raccoon", opts={"vars": {"hash": mal_sha256}})
+        #self.len(6, nodes)
 
         # try to re-ingest it, should fail without --force
         msgs = await core.stormlist("file:bytes:sha256=$hash | zw.triage.ingest", opts={"vars": {"hash": mal_sha256}})
