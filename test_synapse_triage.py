@@ -77,10 +77,9 @@ class SynapseTriageTest(s_test.SynTest):
             # TODO: also customizable tag prefixes like other rapid power-ups
             msgs = await core.stormlist("file:bytes:sha256=$hash | triage.ingest", opts={"vars": {"hash": mal_sha256}})
             self.stormIsInPrint("Ingested latest execution report for ", msgs)
-            print(msgs)
 
             # check the meta:source edge
-            nodes = await core.nodes("meta:source:name=\"hatching triage public cloud\" -> *")
+            nodes = await core.nodes("meta:source:name=\"hatching triage public cloud\"")
             #nodes = await core.nodes("meta:source:name=$name -(seen)> *", opts={"vars": {"name": "hatching triage public cloud"}})
             self.len(1, nodes)
 

@@ -92,7 +92,6 @@ function getLatestIdForSample(sha256) {
     $resp = $lib.inet.http.get("https://api.tria.ge/v0/search", headers=$headers, params=$params)
     
     if ($resp.code != 200) {
-        $lib.warn($lib.str.format("Failed to check if reports exist for {hash} on Hatching Triage", hash=$sha256))
         return("")
     }
     
@@ -115,7 +114,6 @@ function getOverviewReportForId(id) {
     $resp = $lib.inet.http.get($lib.str.format("https://api.tria.ge/v0/samples/{id}/overview.json", id=$id), headers=$headers)
     
     if ($resp.code != 200) {
-        $lib.warn($lib.str.format("Failed to get overview report for {id}", id=$id))
         return($lib.null)
     }
     
