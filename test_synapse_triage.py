@@ -19,21 +19,19 @@ def get_mal_bytes():
         with zf.open("sample", "r", b"infected") as f:
             return f.read()
 
-class SynapseTriageTest(s_test.SynTest):
+def get_api_key():
+    key = os.getenv("SYNAPSE_TRIAGE_APIKEY")
+    if key is not None:
+        return key
 
-    def get_api_key(self):
-        key = os.getenv("SYNAPSE_TRIAGE_APIKEY")
-        if key is not None:
-            return key
-        
-        return input("Please enter your Hatching Triage Public Cloud API Key: ")
+class SynapseTriageTest(s_test.SynTest):
 
     async def test_synapse_triage(self):
         # this test suite requires internet access
         self.skipIfNoInternet()
 
         # get API key
-        api_key = self.get_api_key()
+        api_key = get_api_key()
 
         async with self.getTestCore() as core:
             # upload malware sample to test axon
