@@ -1,5 +1,5 @@
 name: zw-triage
-version: 0.1.1
+version: 0.1.2
 synapse_minversion: [2, 58, 0]
 desc: The Triage package provides commands to run samples and ingest execution reports from the Hatching Triage public cloud sandbox.
 
