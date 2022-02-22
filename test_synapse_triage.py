@@ -29,7 +29,7 @@ class SynapseTriageTest(s_test.SynTest):
     def has_tag(self, node, tag):
         self.true(node.tags.get(tag) is not None)
 
-    # Upload the sample used for testing
+    # Upload the sample used for submission testing
     async def _t_upload_sample(self, core: s_cortex.Cortex) -> str:
         # upload malware sample to test axon
         mal_bytes = get_mal_bytes()
@@ -78,7 +78,7 @@ class SynapseTriageTest(s_test.SynTest):
         self.stormIsInPrint("Hatching Triage (sample ID: ", msgs)
     
     # Tests for report ingestion
-    async def _t_ingest(self, core: s_cortex.Cortex, mal_sha256: str):
+    async def _t_ingest_file(self, core: s_cortex.Cortex, mal_sha256: str):
         # reports already exist for the test sample, so we don't need to wait to ingest it
         # TODO: add --config and --noconfig along with something in triage.setup to model configs
         # TODO: also customizable tag prefixes like other rapid power-ups
@@ -101,18 +101,13 @@ class SynapseTriageTest(s_test.SynTest):
 
         # tags?
         self.has_tag(n, "rep.triage.stealer")
-        self.has_tag(n, "rep.triage.suricata")
 
         # config?
         self.has_tag(n, "desc.config.raccoon.botnet.e50c949ecf0380ef03a3368f13619264294662b6")
 
         # check the passwd edges
-        nodes = await core.nodes("file:bytes:sha256=$hash -(refs)> inet:passwd +#rep.triage.raccoon", opts={"vars": {"hash": mal_sha256}})
+        nodes = await core.nodes("file:bytes:sha256=$hash -(refs)> inet:passwd +#rep.triage.raccoon +#desc.config.raccoon.passwd", opts={"vars": {"hash": mal_sha256}})
         self.len(2, nodes)
-
-        # check the inet:http:requests
-        #nodes = await core.nodes("file:bytes:sha256=$hash -> inet:dns:request +#rep.triage.raccoon", opts={"vars": {"hash": mal_sha256}})
-        #self.len(6, nodes)
 
         # try to re-ingest it, should fail without --force
         msgs = await core.stormlist("file:bytes:sha256=$hash | zw.triage.ingest", opts={"vars": {"hash": mal_sha256}})
@@ -123,19 +118,27 @@ class SynapseTriageTest(s_test.SynTest):
         msgs = await core.stormlist("file:bytes:sha256=$hash | zw.triage.ingest --force", opts={"vars": {"hash": mal_sha256}})
         self.stormIsInPrint("Ingested latest execution report for ", msgs)
 
-    async def _t_ingest_id_1(self, core: s_cortex.Cortex):
-        # Vidar sample
-        # https://tria.ge/220221-wa3sgsbgbj
-        sample_id = "220221-wa3sgsbgbj"
-        hash = "31fabfbe61fdc161c12c62ec848d558cce743de39b58cf634910bd6fb305f22d"
-    
+    # The following functions ingest various submissions from Tria.ge to ensure each part of a config can be
+    # properly modeled (since no single sample will cover every item and all of its edge cases)
+
+    # Helper function to ingest a report
+    async def _t_ingest_helper(self, core: s_cortex.Cortex, sample_id: str, hash: str):
         msgs = await core.stormlist("zw.triage.ingest.id $id", opts={"vars": {"id": sample_id}})
         self.stormIsInPrint(f"Ingested {sample_id} from Hatching Triage", msgs)
 
         nodes = await core.nodes("file:bytes:sha256=$hash", opts={"vars": {"hash": hash}})
         self.len(1, nodes)
         n = nodes[0]
-        self.eq(n.ndef, ("file:bytes", "sha256:31fabfbe61fdc161c12c62ec848d558cce743de39b58cf634910bd6fb305f22d"))
+        self.eq(n.ndef, ("file:bytes", f"sha256:{hash}"))
+
+        return n
+
+    async def _t_ingest_id_1(self, core: s_cortex.Cortex):
+        # vidar sample
+        sample_id = "220221-wa3sgsbgbj"
+        hash = "31fabfbe61fdc161c12c62ec848d558cce743de39b58cf634910bd6fb305f22d"
+
+        n = await self._t_ingest_helper(core, sample_id, hash)    
 
         # aka?
         self.has_tag(n, "rep.triage.vidar")
@@ -151,10 +154,69 @@ class SynapseTriageTest(s_test.SynTest):
         # check the url node
         nodes = await core.nodes("file:bytes=$hash -> inet:http:request:exe +#rep.triage.vidar :url -> inet:url +#rep.triage.vidar", opts={"vars": {"hash": hash}})
         self.len(2, nodes)
+    
+    async def _t_ingest_id_2(self, core: s_cortex.Cortex):
+        # formbook sample
+        sample_id = "220221-pqletaabf3"
+        hash = "8c3f224cf0567bbd99154105d471e29b60f5e5c0afb2683be992c9f702a7e7d9"
+    
+        n = await self._t_ingest_helper(core, sample_id, hash)    
+
+        # aka?
+        self.has_tag(n, "rep.triage.formbook")
+
+        # config?
+        self.has_tag(n, "desc.config.formbook.campaign.g2m3")
+        self.has_tag(n, "desc.config.formbook.version.4_1")
+
+        # decoys
+        nodes = await core.nodes("file:bytes=$hash -> inet:dns:request:exe +#rep.triage.formbook", opts={"vars": {"hash": hash}})
+        self.len(64, nodes)
+        nodes = await core.nodes("file:bytes=$hash -> inet:dns:request:exe +#rep.triage.formbook :query:name:fqdn -> inet:fqdn +#desc.config.formbook.decoy +#rep.triage -#rep.triage.formbook", opts={"vars": {"hash": hash}})
+        self.len(64, nodes)
 
     async def test_synapse_triage(self):
         # this test suite requires internet access
         self.skipIfNoInternet()
+
+        """
+        sample 0 (raccoon): 220221-y6jetsbhdq (resubmitted each test run)
+        sample 1 (vidar): 220221-wa3sgsbgbj
+        sample 2 (formbook): 220221-pqletaabf3
+        sample 3 (unknown ransomware): 201016-1xzf9nn6rn (has some stuff in the Ransom struct too)
+        sample 4 (excel doc with macros): 220221-y6qh5sbhdr
+        sample 5 (remcos): 220221-yhjqpaaha2 (inet:server c2)
+        sample 6 (emotet): 220221-x4xc8sbhar (multiline passwords)
+        sample 7 (asyncart): 220221-xd3gkaagd4 (possibly different c2 format?)
+        sample 8 (snakekeylogger): 220221-w52hxaagb8
+        sample 9 (metasploit): 220221-wthxesaga8 (version with / in it)
+        sample 10 (conti): 210121-3mlv3q5jpj (more ransom stuff)
+        sample 11 (asyncrat): 220212-qrkqcaefam (mutex)
+        sample 12 (gozi isfb): 210210-1m263rm71e (dns, extracted PE)
+        sample 13 (qakbot): 200110-1r4anj6et2 (webinject)
+        sample 14 (metasploit): 210215-mjgn5wchba (shellcode)
+
+        TODO: find samples that create the missing config items
+
+        Config attribute coverage checklist (https://tria.ge/docs/cloud-api/overview-report/):
+        * C2            -   sample 1
+        * Version       -   sample 1
+        * Botnet        -   sample 1
+        * Campaign      -   sample 2
+        * Mutex         -   sample 11
+        * Decoy         -   sample 2
+        * Wallet        -   sample 3
+        * DNS           -   sample 12
+        * Keys          -   sample 1
+        * Webinject     -   sample 13
+        * CommandLines  -   NONE
+        * ListenAddr    -   NONE
+        * ListenPort    -   NONE
+        * ListenFor     -   NONE
+        * Shellcode     -   sample 14
+        * ExtractedPE   -   sample 12
+        * Credentials   -   sample 8
+        """
 
         async with self.getTestCore() as core:
             await self._t_install_pkg(core)
@@ -163,6 +225,7 @@ class SynapseTriageTest(s_test.SynTest):
 
             await self._t_submit(core, mal_sha256) 
 
-            await self._t_ingest(core, mal_sha256)
+            await self._t_ingest_file(core, mal_sha256)
 
             await self._t_ingest_id_1(core)
+            await self._t_ingest_id_2(core)

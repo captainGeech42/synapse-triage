@@ -17,6 +17,7 @@ function modelOverviewReport(report) {
     // get the file bytes if we don't have them
     if (not $lib.bytes.has(:sha256)) {
         // TODO: get sample bytes
+        // https://tria.ge/docs/cloud-api/samples/#get-samplessampleidsample
         $lib.warn("don't have bytes for this sample")
     }
 
@@ -42,8 +43,8 @@ function modelOverviewReport(report) {
         // if there is a : in the tag, it is a config value (or family, which is already handled)
         // skip it
         // there is also "suricata", which means the dynamic execution network traffic hit on a
-        // suricata rule. TODO decide if that should get modeled (currently it is)
-        if ($tag.find(":") = $lib.null) { [ +#rep.triage.$tag] }
+        // suricata rule
+        if ($tag.find(":") = $lib.null or $tag != "suricata") { [ +#rep.triage.$tag] }
     }
 
     // model config
@@ -69,15 +70,26 @@ function modelOverviewReport(report) {
                     "keys": {
                         for $key in $val {
                             // TODO: tag the type of key
-                            { [( inet:passwd=$key.value +#rep.triage.$fam <(seen)+ { yield $src} )] }
+                            // TODO: add support for naming the key usage
+                            { [( inet:passwd=$key.value +#rep.triage.$fam +#desc.config.$fam.passwd <(seen)+ { yield $src} )] }
                             [ +(refs)> { inet:passwd=$key.value } ]
                         }
                     }
                     "c2": {
                         // TODO add support for inet:server
                         for $c2 in $val {
-                            { [( inet:url=$c2 +#rep.triage.$fam <(seen)+ { yield $src} )] }
+                            { [( inet:url=$c2 +#rep.triage.$fam +#desc.config.$fam.c2 <(seen)+ { yield $src } )] }
                             { [( inet:http:request=(:sha256, $c2, triage) :url=$c2 :exe=$sampleFileBytes +#rep.triage.$fam <(seen)+ { yield $src } )] }
+                        }
+                    }
+                    "decoy": {
+                        // decoy domains only get #rep.triage, not with the family name
+                        // they also get desc.config.$fam.decoy
+                        // the inet:dns:request gets #rep.triage.$fam
+                        // TODO: validate no other form types will come in here
+                        for $domain in $val {
+                            { [( inet:fqdn=$domain +#rep.triage +#desc.config.$fam.decoy <(seen)+ { yield $src } )] }
+                            { [( inet:dns:request=(:sha256, $domain, triage) :query:name:fqdn=$domain :exe=$sampleFileBytes +#rep.triage.$fam <(seen)+ { yield $src } )] }
                         }
                     }
                 }
