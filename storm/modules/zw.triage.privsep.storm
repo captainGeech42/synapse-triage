@@ -76,10 +76,39 @@ function modelOverviewReport(report) {
                         }
                     }
                     "c2": {
-                        // TODO add support for inet:server
                         for $c2 in $val {
-                            { [( inet:url=$c2 +#rep.triage.$fam +#desc.config.$fam.c2 <(seen)+ { yield $src } )] }
-                            { [( inet:http:request=(:sha256, $c2, triage) :url=$c2 :exe=$sampleFileBytes +#rep.triage.$fam <(seen)+ { yield $src } )] }
+                            // try it as an inet:server
+                            ($ok, $norm) = $lib.trycast(inet:server, $c2)
+                            if $ok {
+                                // good as a server, model it
+                                // TODO add support for inet:server
+                                $lib.warn("no support for inet:server C2 modeling yet")
+                                continue
+                            }
+
+                            // try it as a URL
+                            ($ok, $norm) = $lib.trycast(inet:url, $c2)
+
+                            if (not $ok) {
+                                // no dice on inet:server or inet:url
+                                // most likely asdf.com:1234 type value
+                                // example: 220212-qrkqcaefam
+                                // slap a tcp:// in front of it and yolo it 
+                                $c2 = $lib.str.concat("tcp://", $c2)
+
+                                // re-cast it to model as url
+                                ($ok, $norm) = $lib.trycast(inet:url, $c2)
+                            }
+
+                            if $ok {
+                                // value is good as a URL, model it
+                                // example for proper url from the report: 220221-wa3sgsbgbj
+                                { [( inet:url=$norm +#rep.triage.$fam +#desc.config.$fam.c2 <(seen)+ { yield $src } )] }
+                                { [( inet:http:request=(:sha256, $norm, triage) :url=$norm :exe=$sampleFileBytes +#rep.triage.$fam <(seen)+ { yield $src } )] }
+                                continue
+                            }
+
+                            $lib.warn($lib.str.concat("couldn't model a C2 server, this is a bug: ", $c2))
                         }
                     }
                     "decoy": {
@@ -90,6 +119,12 @@ function modelOverviewReport(report) {
                         for $domain in $val {
                             { [( inet:fqdn=$domain +#rep.triage +#desc.config.$fam.decoy <(seen)+ { yield $src } )] }
                             { [( inet:dns:request=(:sha256, $domain, triage) :query:name:fqdn=$domain :exe=$sampleFileBytes +#rep.triage.$fam <(seen)+ { yield $src } )] }
+                        }
+                    }
+                    "mutex": {
+                        for $mutex in $val {
+                            { [( it:dev:mutex=$mutex +#rep.triage.$fam +#desc.config.$fam.mutex <(seen)+ { yield $src } )] }
+                            { [( it:exec:mutex=(:sha256, $mutex, triage) :exe=$sampleFileBytes :name=$mutex +#rep.triage.$fam <(seen)+ { yield $src } )] }
                         }
                     }
                 }

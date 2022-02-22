@@ -134,7 +134,7 @@ class SynapseTriageTest(s_test.SynTest):
         return n
 
     async def _t_ingest_id_1(self, core: s_cortex.Cortex):
-        # vidar sample
+        fam = "vidar"
         sample_id = "220221-wa3sgsbgbj"
         hash = "31fabfbe61fdc161c12c62ec848d558cce743de39b58cf634910bd6fb305f22d"
 
@@ -149,14 +149,14 @@ class SynapseTriageTest(s_test.SynTest):
 
         # c2s?
         # check the digraph edge
-        nodes = await core.nodes("file:bytes=$hash -> inet:http:request:exe +#rep.triage.vidar", opts={"vars": {"hash": hash}})
+        nodes = await core.nodes("file:bytes=$hash -> inet:http:request:exe +#rep.triage.$fam -#desc.config.$fam", opts={"vars": {"hash": hash, "fam": fam}})
         self.len(2, nodes)
         # check the url node
-        nodes = await core.nodes("file:bytes=$hash -> inet:http:request:exe +#rep.triage.vidar :url -> inet:url +#rep.triage.vidar", opts={"vars": {"hash": hash}})
+        nodes = await core.nodes("file:bytes=$hash -> inet:http:request:exe +#rep.triage.$fam :url -> inet:url +#rep.triage.$fam +#desc.config.$fam.c2", opts={"vars": {"hash": hash, "fam": fam}})
         self.len(2, nodes)
     
     async def _t_ingest_id_2(self, core: s_cortex.Cortex):
-        # formbook sample
+        fam = "formbook"
         sample_id = "220221-pqletaabf3"
         hash = "8c3f224cf0567bbd99154105d471e29b60f5e5c0afb2683be992c9f702a7e7d9"
     
@@ -170,10 +170,42 @@ class SynapseTriageTest(s_test.SynTest):
         self.has_tag(n, "desc.config.formbook.version.4_1")
 
         # decoys
-        nodes = await core.nodes("file:bytes=$hash -> inet:dns:request:exe +#rep.triage.formbook", opts={"vars": {"hash": hash}})
+        nodes = await core.nodes("file:bytes=$hash -> inet:dns:request:exe +#rep.triage.$fam -#desc.config.$fam", opts={"vars": {"hash": hash, "fam": fam}})
         self.len(64, nodes)
-        nodes = await core.nodes("file:bytes=$hash -> inet:dns:request:exe +#rep.triage.formbook :query:name:fqdn -> inet:fqdn +#desc.config.formbook.decoy +#rep.triage -#rep.triage.formbook", opts={"vars": {"hash": hash}})
+        nodes = await core.nodes("file:bytes=$hash -> inet:dns:request:exe +#rep.triage.$fam :query:name:fqdn -> inet:fqdn +#desc.config.$fam.decoy +#rep.triage -#rep.triage.$fam", opts={"vars": {"hash": hash, "fam": fam}})
         self.len(64, nodes)
+    
+    async def _t_ingest_id_11(self, core: s_cortex.Cortex):
+        fam = "asyncrat"
+        sample_id = "220212-qrkqcaefam"
+        hash = "0ae4a17ca6b29c9777c12f706ea66538a19b46aae1adf8aeb0872a02d5152d86"
+    
+        n = await self._t_ingest_helper(core, sample_id, hash)
+
+        # aka?
+        self.has_tag(n, "rep.triage.asyncrat")
+
+        # config?
+        self.has_tag(n, "desc.config.asyncrat.botnet.default")
+        self.has_tag(n, "desc.config.asyncrat.version.0_5_7b")
+
+        # c2s?
+        # check the digraph edge
+        nodes = await core.nodes("file:bytes=$hash -> inet:http:request:exe +#rep.triage.$fam -#desc.config.$fam", opts={"vars": {"hash": hash, "fam": fam}})
+        self.len(1, nodes)
+        # check the url node
+        nodes = await core.nodes("file:bytes=$hash -> inet:http:request:exe +#rep.triage.$fam :url -> inet:url +#rep.triage.$fam +#desc.config.$fam.c2", opts={"vars": {"hash": hash, "fam": fam}})
+        self.len(1, nodes)
+        
+        # passwd?
+        nodes = await core.nodes("file:bytes:sha256=$hash -(refs)> inet:passwd +#rep.triage.$fam +#desc.config.$fam.passwd", opts={"vars": {"hash": hash, "fam": fam}})
+        self.len(1, nodes)
+
+        # mutex
+        nodes = await core.nodes("file:bytes:sha256=$hash -> it:exec:mutex:exe +#rep.triage.$fam -#desc.config.$fam", opts={"vars": {"hash": hash, "fam": fam}})
+        self.len(1, nodes)
+        nodes = await core.nodes("file:bytes:sha256=$hash -> it:exec:mutex:exe -> it:dev:mutex +#rep.triage.$fam +#desc.config.$fam.mutex", opts={"vars": {"hash": hash, "fam": fam}})
+        self.len(1, nodes)
 
     async def test_synapse_triage(self):
         # this test suite requires internet access
@@ -229,3 +261,4 @@ class SynapseTriageTest(s_test.SynTest):
 
             await self._t_ingest_id_1(core)
             await self._t_ingest_id_2(core)
+            await self._t_ingest_id_11(core)
