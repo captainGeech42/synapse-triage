@@ -44,7 +44,7 @@ function modelOverviewReport(report) {
         // skip it
         // there is also "suricata", which means the dynamic execution network traffic hit on a
         // suricata rule
-        if ($tag.find(":") = $lib.null or $tag != "suricata") { [ +#rep.triage.$tag] }
+        if ($tag.find(":") = $lib.null and $tag != "suricata") { [ +#rep.triage.$tag] }
     }
 
     // model config

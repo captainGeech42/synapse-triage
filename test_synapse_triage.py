@@ -28,6 +28,9 @@ class SynapseTriageTest(s_test.SynTest):
 
     def has_tag(self, node, tag):
         self.true(node.tags.get(tag) is not None)
+    
+    def not_has_tag(self, node, tag):
+        self.true(node.tags.get(tag) is None)
 
     # Upload the sample used for submission testing
     async def _t_upload_sample(self, core: s_cortex.Cortex) -> str:
@@ -101,6 +104,7 @@ class SynapseTriageTest(s_test.SynTest):
 
         # tags?
         self.has_tag(n, "rep.triage.stealer")
+        self.not_has_tag(n, "rep.triage.suricata")
 
         # config?
         self.has_tag(n, "desc.config.raccoon.botnet.e50c949ecf0380ef03a3368f13619264294662b6")
@@ -142,6 +146,12 @@ class SynapseTriageTest(s_test.SynTest):
 
         # aka?
         self.has_tag(n, "rep.triage.vidar")
+
+        # tags?
+        self.has_tag(n, "rep.triage.discovery")
+        self.has_tag(n, "rep.triage.spyware")
+        self.has_tag(n, "rep.triage.stealer")
+        self.not_has_tag(n, "rep.triage.suricata")
 
         # config?
         self.has_tag(n, "desc.config.vidar.version.50_3")
