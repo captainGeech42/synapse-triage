@@ -10,25 +10,25 @@
 
     // check if it is already modeled
     if (not $cmdopts.force and $triage.isSampleModeled($fileSha256)) {
-        $lib.warn($lib.str.format("{hash} is already modeled, use --force to re-model", hash=$fileSha256))
+        $lib.warn("{hash} is already modeled, use --force to re-model", hash=$fileSha256)
         return()
     }
 
     // get the sample id
     $sampleId = $api.getLatestIdForSample($fileSha256)
     if ($sampleId = "") {
-        $lib.warn($lib.str.concat("Couldn't find any reports for ", $fileSha256))
+        $lib.warn("Couldn't find any reports for {hash}", hash=$fileSha256)
         return()
     }
     // get the overview report
     $report = $api.getOverviewReportForId($sampleId)
     if ($report = $lib.null) {
-        $lib.warn($lib.str.format("Failed to get overview report for {id}", id=$sampleId))
+        $lib.warn("Failed to get overview report for {id}", id=$sampleId)
         return()
     }
 
     // model it
     $privsep.modelOverviewReport($report)
 
-    $lib.print($lib.str.concat("Ingested latest execution report for ", $fileSha256))
+    $lib.print("Ingested latest execution report for {hash}", hash=$fileSha256)
 }

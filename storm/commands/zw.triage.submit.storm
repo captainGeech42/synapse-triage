@@ -4,12 +4,12 @@
     $api = $lib.import(zw.triage.api)
     
     if (not $cmdopts.force and $api.doReportsExistForSample(:sha256)) {
-        $lib.warn($lib.str.format("Report(s) already exist for {hash}. Use triage.ingest to model them, or triage.submit --force to resubmit them", hash=:sha256))
+        $lib.warn("Report(s) already exist for {hash}. Use triage.ingest to model them, or triage.submit --force to resubmit them", hash=:sha256)
         return()
     }
     
     $id = $api.submitToTriage(:sha256, false)
     if ($id != "") {
-        $lib.print($lib.str.format("Submitted {hash} to Hatching Triage (sample ID: {id})", hash=:sha256, id=$id))
+        $lib.print("Submitted {hash} to Hatching Triage (sample ID: {id})", hash=:sha256, id=$id)
     }
 }

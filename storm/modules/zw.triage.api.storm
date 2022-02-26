@@ -49,16 +49,16 @@ function doReportsExistForSample(sha256) {
     
     if ($resp.code != 200) {
         $lib.warn($lib.str.format("Failed to check if reports exist for {hash} on Hatching Triage", hash=$sha256))
-        return(false)
+        return($lib.false)
     }
     
     $resp_data = $resp.json()
     
     if ($resp_data.data.size() > 0) {
-        return(true)
+        return($lib.true)
     }
     
-    return(false)
+    return($lib.false)
 }
 
 // Check the status of a sample
@@ -72,7 +72,7 @@ function getSampleStatusById(id) {
 
     $resp = $lib.inet.http.get($lib.str.concat("https://api.tria.ge/v0/samples/", $id), headers=$headers)
     if ($resp.code != 200) {
-        $lib.warn($lib.str.format("Failed to check sample status for {id}", id=$id))
+        $lib.warn("Failed to check sample status for {id}", id=$id)
         return("")
     }
 
