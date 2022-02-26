@@ -119,3 +119,9 @@ function getOverviewReportForId(id) {
     
     return($resp.json())
 }
+
+function ingestBytes(id) {
+    $headers = ({"Authorization": $lib.str.concat("Bearer ", $setup.getApiKey())})
+
+    $lib.axon.wget($lib.str.format("https://api.tria.ge/v0/samples/{id}/sample", id=$id), headers=$headers)
+}

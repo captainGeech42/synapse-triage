@@ -126,9 +126,11 @@ class SynapseTriageTest(s_test.SynTest):
     # properly modeled (since no single sample will cover every item and all of its edge cases)
 
     # Helper function to ingest a report
+    # Should only be used on samples that weren't submitted out of the cortex
     async def _t_ingest_helper(self, core: s_cortex.Cortex, sample_id: str, hash: str):
         msgs = await core.stormlist("zw.triage.ingest.id $id", opts={"vars": {"id": sample_id}})
         self.stormIsInPrint(f"Ingested {sample_id} from Hatching Triage", msgs)
+        self.stormIsInPrint("Downloaded bytes for", msgs)
 
         nodes = await core.nodes("file:bytes:sha256=$hash", opts={"vars": {"hash": hash}})
         self.len(1, nodes)

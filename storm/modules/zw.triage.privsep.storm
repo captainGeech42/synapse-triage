@@ -1,3 +1,5 @@
+$api = $lib.import(zw.triage.api)
+
 // Get the proper meta:source node for Hatching Triage
 // Args: n/a
 // Returns: meta:source node
@@ -16,9 +18,8 @@ function modelOverviewReport(report) {
 
     // get the file bytes if we don't have them
     if (not $lib.bytes.has(:sha256)) {
-        // TODO: get sample bytes
-        // https://tria.ge/docs/cloud-api/samples/#get-samplessampleidsample
-        $lib.warn("don't have bytes for this sample")
+        $api.ingestBytes($report.sample.id)
+        $lib.print("Downloaded bytes for {hash}", hash=:sha256)
     }
 
     $sampleFileBytes = $node
