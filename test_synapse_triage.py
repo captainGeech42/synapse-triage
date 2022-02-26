@@ -219,6 +219,33 @@ class SynapseTriageTest(s_test.SynTest):
         nodes = await core.nodes("file:bytes:sha256=$hash -> it:exec:mutex:exe -> it:dev:mutex +#rep.triage.$fam +#desc.config.$fam.mutex", opts={"vars": {"hash": hash, "fam": fam}})
         self.len(1, nodes)
 
+    # come back to this after https://github.com/vertexproject/synapse/issues/2568 resolution
+    async def _t_ingest_id_8(self, core: s_cortex.Cortex):
+        fam = "snakekeylogger"
+        sample_id = "220221-w52hxaagb8"
+        hash = "3867e43a887e28fed8aa9174f7802ea05c7fd168633e6f75bcbe584497786b0d"
+    
+        n = await self._t_ingest_helper(core, sample_id, hash)
+
+        # aka?
+        self.has_tag(n, "rep.triage.snakekeylogger")
+
+        # creds
+        nodes = await core.nodes("file:bytes=$hash -(refs)> inet:url +#rep.triage.$fam +#desc.config.$fam.creds", opts={"vars": {"hash": hash, "fam": fam}})
+        self.len(1, nodes) 
+        creds = nodes[0]
+        self.eq(creds.get("fqdn"), "mail.stilltech.ro")
+        
+        # check the email_to value
+        pass
+
+    async def _t_ingest_id_15(self, core: s_cortex.Cortex):
+        fam = "agenttesla"
+        sample_id = "210509-hy4nqqyjgx"
+        hash = "1aa5850bed0207347b3ae757894500241e9b409004f3b762c58da5e0c4e12ad9"
+    
+        n = await self._t_ingest_helper(core, sample_id, hash)
+
     async def test_synapse_triage(self):
         # this test suite requires internet access
         self.skipIfNoInternet()
@@ -239,6 +266,7 @@ class SynapseTriageTest(s_test.SynTest):
         sample 12 (gozi isfb): 210210-1m263rm71e (dns, extracted PE)
         sample 13 (qakbot): 200110-1r4anj6et2 (webinject)
         sample 14 (metasploit): 210215-mjgn5wchba (shellcode)
+        sample 15 (agenttesla): 210509-hy4nqqyjgx (more credentials)
 
         TODO: find samples that create the missing config items
 
