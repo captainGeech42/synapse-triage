@@ -93,3 +93,12 @@ commands:
           default: false
           action: store_true
           help: Ingest the report even if the underlying file:bytes node already has a modeled report
+  
+  - name: zw.triage.ingest.cron
+    descr: Ingest a sample that was submitted. SHOULD NOT BE CALLED DIRECTLY.
+    perms:
+      - [power-ups, zw, triage, user]
+    cmdargs:
+      - - sampleId
+        - type: str
+          help: Sample ID to ingest (e.g., 220221-wxflgabgdq)

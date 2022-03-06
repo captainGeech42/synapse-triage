@@ -1,0 +1,34 @@
+// import libraries
+$triage = $lib.import(zw.triage)
+$api = $lib.import(zw.triage.api)
+$privsep = $lib.import(zw.triage.privsep)
+
+$iden = $privsep.getCronIden()
+{ cron.del $iden }
+
+// check the status
+$status = $api.getSampleStatus($cmdopts.sampleId)
+switch $status {
+    // will never be able to ingest
+    "failed": { $lib.exit("Sample {id} failed, can't ingest", id=$cmdopts.sampleId) }
+
+    // ready to ingest
+    "reported": {}
+
+    // will eventually be able to ingest
+    *: {
+        { cron.at --minute +1 { zw.triage.ingest.cron $cmdopts.sampleId } }
+        $lib.exit()
+    }
+}
+
+// get the overview report
+$report = $api.getOverviewReportForId($cmdopts.sampleId)
+if ($report = $lib.null) {
+    $lib.exit("Failed to get overview report for {id}", id=$cmdopts.sampleId)
+}
+
+// model it
+$privsep.modelOverviewReport($report)
+
+$lib.print("Ingested {id} from Hatching Triage", id=$cmdopts.sampleId)

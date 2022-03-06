@@ -1,3 +1,4 @@
+import asyncio
 import binascii
 import hashlib
 import os
@@ -42,6 +43,9 @@ class SynapseTriageTest(s_test.SynTest):
             await fd.write(mal_bytes)
             _, axon_sha256 = await fd.save()
             self.eq(binascii.hexlify(axon_sha256).decode(), mal_sha256)
+        
+        # make sure axon reports having the bytes
+        self.true(await core.axon.has(binascii.unhexlify(mal_sha256)))
 
         # create file:bytes node in the cortex
         nodes = await core.nodes("[ file:bytes=$hash :name=$name ]", opts={"vars": {"hash": mal_sha256, "name": "raccoon_test_boi"}})
@@ -131,6 +135,11 @@ class SynapseTriageTest(s_test.SynTest):
         msgs = await core.stormlist("zw.triage.ingest.id $id", opts={"vars": {"id": sample_id}})
         self.stormIsInPrint(f"Ingested {sample_id} from Hatching Triage", msgs)
         self.stormIsInPrint("Downloaded bytes for", msgs)
+
+        async for (_, (h, _)) in core.axon.hashes(0):
+            print(binascii.hexlify(h).decode())
+
+        self.true(await core.axon.has(binascii.unhexlify(hash)))
 
         nodes = await core.nodes("file:bytes:sha256=$hash", opts={"vars": {"hash": hash}})
         self.len(1, nodes)

@@ -12,12 +12,11 @@ if ($report = $lib.null) {
 // check if it is already modeled
 if (not $cmdopts.force and $triage.isSampleModeled($report.sample.sha256)) {
     $lib.warn("The file:bytes for {id} already has a report ingested, use --force to re-ingest", id=$cmdopts.sampleId)
-    return()
+} else {
+    // not modeled, model it
+    $privsep.modelOverviewReport($report)
+
+    $lib.print("Ingested {id} from Hatching Triage", id=$cmdopts.sampleId)
 }
-
-// model it
-$privsep.modelOverviewReport($report)
-
-$lib.print("Ingested {id} from Hatching Triage", id=$cmdopts.sampleId)
 
 fini { file:bytes:sha256=$report.sample.sha256 }

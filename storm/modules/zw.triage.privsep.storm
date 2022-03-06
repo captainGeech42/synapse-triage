@@ -18,8 +18,12 @@ function modelOverviewReport(report) {
 
     // get the file bytes if we don't have them
     if (not $lib.bytes.has(:sha256)) {
-        $api.ingestBytes($report.sample.id)
-        $lib.print("Downloaded bytes for {hash}", hash=:sha256)
+        $ok = $api.ingestBytes($report.sample.id)
+        if $ok {
+            $lib.print("Downloaded bytes for {hash}", hash=:sha256)
+        } else {
+            $lib.print("Couldn't download bytes for {hash}, will only model", hash=:sha256)
+        }
     }
 
     $sampleFileBytes = $node
@@ -134,4 +138,23 @@ function modelOverviewReport(report) {
     }
 
     fini { return() }
+}
+
+// Get an iden value for a cron job
+// Args:
+//  - id (str): sample ID the job is for
+// Returns: str
+function getCronIden(id) {
+    return($lib.guid("zw.triage", "callback", id))
+}
+
+// Register a one-off cronjob as a callback to ingest
+// a sample once the sandbox execution finishes
+// Args:
+//  - id (str): the sample ID to ingest
+// Returns: bool
+function registerIngestCron(id) {
+    $iden = $getCronIden($id)
+
+    cron.at --minute +3 --iden $iden { zw.triage.ingest.cron $id }
 }

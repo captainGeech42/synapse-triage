@@ -120,8 +120,36 @@ function getOverviewReportForId(id) {
     return($resp.json())
 }
 
+// Download the bytes from Hatching Triage for a sample into the axon
+// Args:
+//  - id (str): Sample ID to download
+// Returns: none
 function ingestBytes(id) {
     $headers = ({"Authorization": $lib.str.concat("Bearer ", $setup.getApiKey())})
 
-    $lib.axon.wget($lib.str.format("https://api.tria.ge/v0/samples/{id}/sample", id=$id), headers=$headers)
+    $resp = $lib.axon.wget($lib.str.format("https://api.tria.ge/v0/samples/{id}/sample", id=$id), headers=$headers)
+
+    if $resp.ok {
+        return($lib.true)
+    } else {
+        return($lib.false)
+    }
+}
+
+// Get the status of a sample
+// Args:
+//  - id (str): sample ID to check
+// Returns: str | null
+// Different statuses: https://tria.ge/docs/cloud-api/samples/#the-sample-object
+function getSampleStatus(id) {
+    $headers = ({"Authorization": $lib.str.concat("Bearer ", $setup.getApiKey())})
+
+    $resp = $lib.inet.http.get($lib.str.format("https://api.tria.ge/v0/samples/{id}", id=$id), headers=$headers)
+    
+    if ($resp.code != 200) {
+        $lib.warn("Couldn't check the status of {id}", id=$id)
+        return($lib.null)
+    }
+
+    return($resp.json().status)
 }
