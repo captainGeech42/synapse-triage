@@ -32,8 +32,9 @@ function modelOverviewReport(report) {
     $completed_ts = $lib.time.parse($report.sample.completed, "%Y-%m-%dT%H:%M:%SZ")
 
     // edge our source
+    // TODO: i think the .seen is being applied to the file:bytes node and not this edge
     $src = $getMetaSource()
-    [ <(seen)+ { yield $src } .seen=$completed_ts]
+    [ <(seen)+ { yield $src } .seen=$completed_ts ]
 
     // add family aka
     for $family in $report.analysis.family {
@@ -85,9 +86,11 @@ function modelOverviewReport(report) {
                             // try it as an inet:server
                             ($ok, $norm) = $lib.trycast(inet:server, $c2)
                             if $ok {
-                                // good as a server, model it
-                                // TODO add support for inet:server
-                                $lib.warn("no support for inet:server C2 modeling yet")
+                                // good as an inet:server, model it
+
+                                { [( inet:server=$norm +#rep.triage.$fam +#desc.config.$fam.c2 <(seen)+ { yield $src } )] }
+                                { [( inet:flow=(:sha256, $norm, triage) :dst=$norm :src:exe=$sampleFileBytes +#rep.triage.$fam <(seen)+ { yield $src } )] }
+
                                 continue
                             }
 

@@ -196,6 +196,25 @@ class SynapseTriageTest(s_test.SynTest):
         nodes = await core.nodes("file:bytes=$hash -> inet:dns:request:exe +#rep.triage.$fam :query:name:fqdn -> inet:fqdn +#desc.config.$fam.decoy +#rep.triage -#rep.triage.$fam", opts={"vars": {"hash": hash, "fam": fam}})
         self.len(64, nodes)
     
+    async def _t_ingest_id_5(self, core: s_cortex.Cortex):
+        fam = "remcos"
+        sample_id = "220221-yhjqpaaha2"
+        hash = "8f7ecd2daaf1928bdcb388f57bc5f02874eee217f02e0bf4ce06d6566b97283e"
+    
+        n = await self._t_ingest_helper(core, sample_id, hash)
+
+        # aka?
+        self.has_tag(n, "rep.triage.remcos")
+
+        # config?
+        self.has_tag(n, "desc.config.remcos.botnet.googleappupdatehost")
+
+        # inet:server c2
+        nodes = await core.nodes("file:bytes=$hash -> inet:flow:src:exe +#rep.triage.$fam -#desc.config.$fam", opts={"vars": {"hash": hash, "fam": fam}})
+        self.len(1, nodes)
+        nodes = await core.nodes("file:bytes=$hash -> inet:flow:src:exe +#rep.triage.$fam :dst -> inet:server +#desc.config.$fam +#rep.triage.$fam", opts={"vars": {"hash": hash, "fam": fam}})
+        self.len(1, nodes)
+    
     async def _t_ingest_id_11(self, core: s_cortex.Cortex):
         fam = "asyncrat"
         sample_id = "220212-qrkqcaefam"
@@ -310,4 +329,5 @@ class SynapseTriageTest(s_test.SynTest):
 
             await self._t_ingest_id_1(core)
             await self._t_ingest_id_2(core)
+            await self._t_ingest_id_5(core)
             await self._t_ingest_id_11(core)
